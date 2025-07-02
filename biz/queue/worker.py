@@ -9,6 +9,7 @@ from biz.github.webhook_handler import filter_changes as filter_github_changes, 
 from biz.utils.code_reviewer import CodeReviewer
 from biz.utils.im import notifier
 from biz.utils.log import logger
+import biz.utils.file_util as fu
 
 
 
@@ -44,6 +45,8 @@ def handle_push_event(webhook_data: dict, gitlab_token: str, gitlab_url: str, gi
                     deletions += item['deletions']
             # 将review结果提交到Gitlab的 notes
             handler.add_push_notes(f'Auto Review Result: \n{review_result}')
+            time_str = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+            fu.append_content(None, 'pull_review_output/' + time_str, review_result)
 
         event_manager['push_reviewed'].send(PushReviewEntity(
             project_name=webhook_data['project']['name'],
@@ -115,6 +118,9 @@ def handle_merge_request_event(webhook_data: dict, gitlab_token: str, gitlab_url
 
         # 将review结果提交到Gitlab的 notes
         handler.add_merge_request_notes(f'Auto Review Result: \n{review_result}')
+
+        time_str = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        fu.append_content(None, 'merge_review_output/' + time_str, review_result)
 
         # dispatch merge_request_reviewed event
         event_manager['merge_request_reviewed'].send(
